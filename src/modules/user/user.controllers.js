@@ -260,8 +260,15 @@ export const adminLogin = catchAsyncError(async (req, res, next) => {
   if (!isMatch) {
     throw new AppError("Incorrect password.", 401);
   }
+  const tokenPayload = {
+    id: admin._id,
+    role: admin.role,
+  };
+  const token = jwt.sign(tokenPayload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  })
   const adminObj =  admin.toObject()
   delete adminObj.password
   delete adminObj.__v
-  res.status(200).json({ message: 'User profile', data: adminObj })
+  res.status(200).json({ status : true, message: 'User profile', data: adminObj , token })
 })
