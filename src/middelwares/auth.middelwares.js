@@ -51,7 +51,7 @@ export const decodeUserFromToken = catchAsyncError(async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     if(!decoded.userName) return res.json({ message: 'Invalid token ,Name Required Here' });
-    const user = await User.findOne({ name: decoded.name });
+    const user = await User.findOne({ userName: decoded.userName });
     if (user) {
       req.user = user.toObject();
       delete req.user.password;
