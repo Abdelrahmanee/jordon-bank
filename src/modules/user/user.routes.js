@@ -1,0 +1,27 @@
+
+import { Router } from 'express'
+import { approveUser, createAdmin, createUser, getAllApprovedUsers, getAllPendingUsers, getAllRejectedUsers, login, logout, rejectUser } from './user.controllers.js'
+import { checkUniquenational_card, checkUniquePhone } from './user.middelwares.js'
+import { authenticate, authorize, decodeAdminFromToken } from '../../middelwares/auth.middelwares.js'
+import { validate } from '../../middelwares/validation.middelware.js'
+import { ROLES } from '../../utilies/enums.js'
+
+
+const userRouter = Router()
+
+
+
+
+userRouter.post('/create-user', checkUniquenational_card, checkUniquePhone, createUser)
+userRouter.post('/create-admin', checkUniquenational_card, checkUniquePhone, createAdmin)
+userRouter.post('/login', login)
+userRouter.patch('/approve-user', decodeAdminFromToken, authorize([ROLES.ADMIN]), approveUser)
+userRouter.patch('/reject-user', decodeAdminFromToken, authorize([ROLES.ADMIN]), rejectUser)
+
+userRouter.get('/all-pending-users', decodeAdminFromToken, authorize([ROLES.ADMIN]), getAllPendingUsers)
+userRouter.get('/all-rejected-users', decodeAdminFromToken, authorize([ROLES.ADMIN]), getAllRejectedUsers)
+userRouter.get('/all-approved-users', decodeAdminFromToken, authorize([ROLES.ADMIN]), getAllApprovedUsers)
+userRouter.patch('/logout', authenticate, logout)
+
+
+export default userRouter
