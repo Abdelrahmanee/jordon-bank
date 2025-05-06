@@ -20,16 +20,21 @@ export const bootstrap = (app) => {
     app.use(express.json())
 
 
+    const allowedOrigins = ['http://localhost:5173', 'https://jordon-bank.vercel.app'];
+
     const corsOptions = {
-        origin: (origin, callback) => {
-            callback(null, true); // Allow any origin dynamically
-        },
-        credentials: true, // Allow credentials (cookies)
-        allowedHeaders: ['Content-Type', 'Authorization'],
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Allowed methods
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
     };
-
-
+    
     app.use(cors(corsOptions));
 
     app.use(morgan('dev'))
