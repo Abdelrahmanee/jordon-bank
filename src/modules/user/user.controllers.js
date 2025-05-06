@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = '7d'; 
+const JWT_EXPIRES_IN = '7d';
 
 export const createUser = catchAsyncError(async (req, res) => {
   const { userName, phone, national_card, password } = req.body;
@@ -22,7 +22,7 @@ export const createUser = catchAsyncError(async (req, res) => {
     );
   }
 
-  const duplicateQuery = hasUsernameLogin? { userName }: { phone, national_card };
+  const duplicateQuery = hasUsernameLogin ? { userName } : { phone, national_card };
 
   const isExists = await User.findOne(duplicateQuery);
   if (isExists) throw new AppError('User already exists', 400);
@@ -36,209 +36,232 @@ export const createUser = catchAsyncError(async (req, res) => {
     role: ROLES.USER,
   });
   await newUser.save();
-  
+
   const tokenPayload = {
     id: newUser._id,
     role: newUser.role,
-    ...(newUser.userName && { userName: newUser.userName }), 
+    ...(newUser.userName && { userName: newUser.userName }),
   };
 
   const token = jwt.sign(tokenPayload, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
   });
 
-  const user = await User.findById(newUser._id).select('-password'); 
-  res.status(201).json({ message: 'User created successfully', data: user , token });
+  const user = await User.findById(newUser._id).select('-password');
+  res.status(201).json({ message: 'User created successfully', data: user, token });
 });
 
 
 export const approveUser = catchAsyncError(async (req, res) => {
-    await handleUserStatusChange(req, res, USERSTATUS.APPROVED, 'User Approved successfully');
+  await handleUserStatusChange(req, res, USERSTATUS.APPROVED, 'User Approved successfully');
+});
+
+export const rejectUser = catchAsyncError(async (req, res) => {
+  await handleUserStatusChange(req, res, USERSTATUS.REJECTED, 'User Rejected successfully');
+});
+
+const handleUserStatusChange = async (req, res, targetStatus, successMessage) => {
+  const { userId } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  if (user.status === targetStatus) {
+    throw new AppError(`User already ${targetStatus.toLowerCase()}`, 400);
+  }
+
+  user.status = targetStatus;
+  await user.save();
+
+  const userData = user.toObject();
+  delete userData.password;
+  delete userData.__v;
+  delete userData.createdAt;
+  delete userData.updatedAt;
+
+  res.status(200).json({
+    message: successMessage,
+    data: userData,
   });
-  
-  export const rejectUser = catchAsyncError(async (req, res) => {
-    await handleUserStatusChange(req, res, USERSTATUS.REJECTED, 'User Rejected successfully');
-  });
-  
-  const handleUserStatusChange = async (req, res, targetStatus, successMessage) => {
-    const { userId } = req.body;
-  
-    const user = await User.findById(userId);
-    if (!user) throw new AppError('User not found', 404);
-  
-    if (user.status === targetStatus) {
-      throw new AppError(`User already ${targetStatus.toLowerCase()}`, 400);
-    }
-  
-    user.status = targetStatus;
-    await user.save();
-  
-    const userData = user.toObject();
-    delete userData.password;
-    delete userData.__v;
-    delete userData.createdAt;
-    delete userData.updatedAt;
-  
-    res.status(200).json({
-      message: successMessage,
-      data: userData,
-    });
-  };
-  
+};
+
 
 
 export const createAdmin = catchAsyncError(async (req, res) => {
-    const { national_card, phone , password } = req.body;
-    const isExists = await User.findOne({  national_card  ,phone });
-    if (isExists) throw new AppError('Admin already exists', 400);
-    const newUser = new User({
-        national_card,
-        phone,
-        password,
-        status: USERSTATUS.APPROVED,
-        role: ROLES.ADMIN,
-    });
-    
-    await newUser.save();
-    const tokenPayload = {
-      id: newUser._id,
-      role: newUser.role,
-    };
-    console.log("Role"+newUser.role)
-    const token = jwt.sign(tokenPayload, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    })
-    const user = await User.findById(newUser._id)
-    res.status(201).json({ message: 'Admin created successfully', data: user , token });
+  const { national_card, phone, password } = req.body;
+  const isExists = await User.findOne({ national_card, phone });
+  if (isExists) throw new AppError('Admin already exists', 400);
+  const newUser = new User({
+    national_card,
+    phone,
+    password,
+    status: USERSTATUS.APPROVED,
+    role: ROLES.ADMIN,
+  });
+
+  await newUser.save();
+  const tokenPayload = {
+    id: newUser._id,
+    role: newUser.role,
+  };
+  console.log("Role" + newUser.role)
+  const token = jwt.sign(tokenPayload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  })
+  const user = await User.findById(newUser._id)
+  res.status(201).json({ message: 'Admin created successfully', data: user, token });
 })
 export const getAllPendingUsers = catchAsyncError(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-  
-    const filter = { role: ROLES.USER, status: USERSTATUS.PENDING };
-    const [users, total] = await Promise.all([
-      User.find(filter)
-        .select('-__v -createdAt -updatedAt -password')
-        .skip(skip)
-        .limit(limit),
-      User.countDocuments(filter),
-    ]);
-  
-    res.status(200).json({
-      message: 'All Pending Users',
-      data: users,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    });
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const filter = { role: ROLES.USER, status: USERSTATUS.PENDING };
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select('-__v -createdAt -updatedAt -password')
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments(filter),
+  ]);
+
+  res.status(200).json({
+    message: 'All Pending Users',
+    data: users,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    },
   });
-  
-  export const getAllRejectedUsers = catchAsyncError(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-  
-    const filter = { role: ROLES.USER, status: USERSTATUS.REJECTED };
-    const [users, total] = await Promise.all([
-      User.find(filter)
-        .select('-__v -createdAt -updatedAt -password')
-        .skip(skip)
-        .limit(limit),
-      User.countDocuments(filter),
-    ]);
-  
-    res.status(200).json({
-      message: 'All Rejected Users',
-      data: users,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    });
+});
+
+export const getAllRejectedUsers = catchAsyncError(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const filter = { role: ROLES.USER, status: USERSTATUS.REJECTED };
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select('-__v -createdAt -updatedAt -password')
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments(filter),
+  ]);
+
+  res.status(200).json({
+    message: 'All Rejected Users',
+    data: users,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    },
   });
-  
-  export const getAllApprovedUsers = catchAsyncError(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-  
-    const filter = { role: ROLES.USER, status: USERSTATUS.APPROVED };
-    const [users, total] = await Promise.all([
-      User.find(filter)
-        .select('-__v -createdAt -updatedAt -password')
-        .skip(skip)
-        .limit(limit),
-      User.countDocuments(filter),
-    ]);
-  
-    res.status(200).json({
-      message: 'All Approved Users',
-      data: users,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    });
+});
+
+export const getAllApprovedUsers = catchAsyncError(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const filter = { role: ROLES.USER, status: USERSTATUS.APPROVED };
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select('-__v -createdAt -updatedAt -password')
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments(filter),
+  ]);
+
+  res.status(200).json({
+    message: 'All Approved Users',
+    data: users,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    },
   });
-  
+});
+
 
 export const login = catchAsyncError(async (req, res, next) => {
-    const { phone, national_card, password } = req.body;
-  
-    const user = await User.findOne({ phone, national_card });
-  
-    if (!user) {
-      throw new AppError("Invalid credentials. Please check your phone and national ID.", 401);
-    }
-  
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new AppError("Incorrect password.", 401);
-    }
-  
-    if (user.role === ROLES.USER && user.status === USERSTATUS.PENDING) {
-      throw new AppError("Your account is not approved yet.", 403);
-    }
-    if (user.status === USERSTATUS.REJECTED) {
-        throw new AppError("Your account is rejected.", 403);
-    }
-  
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-      },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-  
-    const userData = user.toObject();
-    delete userData.password;
-    delete userData.__v;
-    delete userData.createdAt;
-    delete userData.updatedAt;
-  
-    res.status(200).json({
-      message: "Logged in successfully.",
-      token,
-      data: userData,
-    });
+  const { phone, national_card, password } = req.body;
+
+  const user = await User.findOne({ phone, national_card });
+
+  if (!user) {
+    throw new AppError("Invalid credentials. Please check your phone and national ID.", 401);
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new AppError("Incorrect password.", 401);
+  }
+
+  if (user.role === ROLES.USER && user.status === USERSTATUS.PENDING) {
+    throw new AppError("Your account is not approved yet.", 403);
+  }
+  if (user.status === USERSTATUS.REJECTED) {
+    throw new AppError("Your account is rejected.", 403);
+  }
+
+  const token = jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+
+  const userData = user.toObject();
+  delete userData.password;
+  delete userData.__v;
+  delete userData.createdAt;
+  delete userData.updatedAt;
+
+  res.status(200).json({
+    message: "Logged in successfully.",
+    token,
+    data: userData,
   });
+});
 
 export const deleteUser = catchAsyncError(async (req, res, next) => {
-    await User.findByIdAndUpdate(req.user._id, { isLoggedOut: true, status: USERSTATUS.DELETED })
-    res.status(200).json({ message: "User is deleted" })
+  await User.findByIdAndUpdate(req.user._id, { isLoggedOut: true, status: USERSTATUS.DELETED })
+  res.status(200).json({ message: "User is deleted" })
 })
 
 export const logout = catchAsyncError(async (req, res, next) => {
-    await User.findByIdAndUpdate(req.user._id, { isLoggedOut: true, status: USERSTATUS.OFFLINE })
-    res.status(200).json({ message: "Logged out success" })
+  await User.findByIdAndUpdate(req.user._id, { isLoggedOut: true, status: USERSTATUS.OFFLINE })
+  res.status(200).json({ message: "Logged out success" })
+})
+
+export const getUserProfile = catchAsyncError(async (req, res, next) => {
+  console.log(req.user)
+  const user = await User.findById(req.user._id).select('-password -__v -createdAt -updatedAt')
+  if (!user) throw new AppError('User not found', 404)
+  res.status(200).json({ message: 'User profile', data: user })
+})
+
+export const adminLogin = catchAsyncError(async (req, res, next) => {
+  const { phone, national_card, password } = req.body;
+  const admin = await User.findOne({ phone, national_card, role: ROLES.ADMIN }).select(' -__v -createdAt -updatedAt')
+  if (!admin) {
+    throw new AppError("Invalid credentials. Please check your phone and national ID.", 401);
+  }
+  const isMatch = await bcrypt.compare(password, admin.password);
+  if (!isMatch) {
+    throw new AppError("Incorrect password.", 401);
+  }
+  const adminObj =  admin.toObject()
+  delete adminObj.password
+  delete adminObj.__v
+  res.status(200).json({ message: 'User profile', data: adminObj })
 })
