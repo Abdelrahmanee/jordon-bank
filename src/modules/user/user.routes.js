@@ -5,13 +5,14 @@ import { checkUniquenational_card, checkUniquePhone } from './user.middelwares.j
 import { authenticate, authorize, decodeAdminFromToken, decodeUserFromToken } from '../../middelwares/auth.middelwares.js'
 import { validate } from '../../middelwares/validation.middelware.js'
 import { ROLES } from '../../utilies/enums.js'
+import { connectToDB } from '../../../db/db.connect.js'
 
 
 const userRouter = Router()
 
 
 
-
+await connectToDB()
 userRouter.post('/create-user', checkUniquenational_card, checkUniquePhone, createUser)
 userRouter.post('/create-admin', checkUniquenational_card, checkUniquePhone, createAdmin)
 userRouter.post('/login', login)

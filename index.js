@@ -1,6 +1,6 @@
 import express from 'express'
 import dotenv from 'dotenv'
-import { connectToDb } from './db/db.connect.js';
+import { connectToDB } from './db/db.connect.js';
 import {bootstrap} from './src/bootstrap.js'
 
 dotenv.config()
@@ -14,7 +14,7 @@ const app = express()
 
 bootstrap(app)
 
-connectToDb()
+await connectToDB()
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
