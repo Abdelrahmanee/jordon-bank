@@ -193,7 +193,7 @@ export const getAllApprovedUsers = catchAsyncError(async (req, res) => {
 export const login = catchAsyncError(async (req, res, next) => {
   const { phone, national_card, password } = req.body;
 
-  const user = await User.findOne({ phone, national_card });
+  const user = await User.findOne({ phone , national_card });
 
   if (!user) {
     throw new AppError("Invalid credentials. Please check your phone and national ID.", 401);
@@ -277,3 +277,43 @@ export const adminLogin = catchAsyncError(async (req, res, next) => {
   delete adminObj.__v
   res.status(200).json({ status : true, message: 'User profile', data: adminObj , token })
 })
+
+
+export const firstLogin = catchAsyncError(async (req, res, next) => {
+  const { phone, national_card, password } = req.body;
+
+  if (!phone || !national_card || !password) {
+    throw new AppError("Phone, national ID, and password are required", 400);
+  }
+
+  const user = await User.findOne({ phone, national_card });
+
+  if (!user) {
+    throw new AppError("Invalid credentials. Please check your phone and national ID.", 401);
+  }
+
+  const token = jwt.sign(
+    {
+      id: user._id,
+      phone: user.phone,
+      national_card: user.national_card,
+      role: user.role,
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+
+  const userData = user.toObject();
+  delete userData.password;
+  delete userData.__v;
+  delete userData.createdAt;
+  delete userData.updatedAt;
+
+  res.status(200).json({
+    status: true,
+    message: "Logged in successfully.",
+    token,
+    data: userData,
+  });
+});
+

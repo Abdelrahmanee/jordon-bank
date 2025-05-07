@@ -1,6 +1,6 @@
 
 import { Router } from 'express'
-import { adminLogin, approveUser, createAdmin, createUser, deleteUser, getAllApprovedUsers, getAllPendingUsers, getAllRejectedUsers, getUserProfile, login, logout, rejectUser } from './user.controllers.js'
+import { adminLogin, approveUser, createAdmin, createUser, deleteUser, firstLogin, getAllApprovedUsers, getAllPendingUsers, getAllRejectedUsers, getUserProfile, login, logout, rejectUser } from './user.controllers.js'
 import { checkUniquenational_card, checkUniquePhone } from './user.middelwares.js'
 import { authenticate, authorize, decodeAdminFromToken, decodeUserFromToken } from '../../middelwares/auth.middelwares.js'
 import { validate } from '../../middelwares/validation.middelware.js'
@@ -20,6 +20,7 @@ userRouter.post('/create-admin', checkUniquenational_card, checkUniquePhone, cre
 userRouter.delete('/delete-user',decodeAdminFromToken   , authorize([ROLES.ADMIN]), deleteUser)
 
 userRouter.post('/login', login)
+userRouter.post('/first-login',  firstLogin)
 userRouter.patch('/approve-user', decodeAdminFromToken, authorize([ROLES.ADMIN]), approveUser)
 userRouter.patch('/reject-user', decodeAdminFromToken, authorize([ROLES.ADMIN]), rejectUser)
 
