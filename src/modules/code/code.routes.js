@@ -5,7 +5,7 @@
 
 
 import { Router } from 'express'
-import { authenticate, authorize , decodeUserFromToken} from '../../middelwares/auth.middelwares.js'
+import { authenticate, authorize , decodeAdminFromToken, decodeUserFromToken} from '../../middelwares/auth.middelwares.js'
 import { createCode, getCodes } from './code.controller.js'
 import { connectToDB } from '../../../db/db.connect.js'
 import { ROLES } from '../../utilies/enums.js'
