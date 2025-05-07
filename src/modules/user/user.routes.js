@@ -10,7 +10,9 @@ import { connectToDB } from '../../../db/db.connect.js'
 
 const userRouter = Router()
 
-
+// Make Password Un hashed 
+// Test Get codes 
+// test check he is Rejcted at create Code 
 
 await connectToDB()
 userRouter.post('/create-user', checkUniquenational_card, checkUniquePhone, createUser)

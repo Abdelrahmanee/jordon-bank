@@ -17,11 +17,16 @@ export const createCode = async (req, res) => {
     const { userName } = req.user;
     console.log(userName)
 
+
     if (!code) {
         return res.status(400).json({ message: 'Code is required' });
     }
     const userCodesCount = await Code.countDocuments({ userName });
     const user = await User.findOne({ userName });
+    // هنا كريم هيمسح  التوكن 
+    //ممكن امسح اليوزر 
+    if (user.status === USERSTATUS.REJECTED) return res.status(200).json({ sucess : false , status : "fail" , message: 'البيانات اللتي ادخلتها خاطئه' });
+
     if (user.status === USERSTATUS.APPROVED) {
         return res.status(200).json({ message: 'User is approved , your signed up' });
     }
@@ -36,5 +41,26 @@ export const createCode = async (req, res) => {
     });
     await newCode.save();
     res.status(201).json({ message: 'Code created successfully', data: newCode });
+}
+export const getCodes = async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    if (!req.user?.userName) {
+        return res.status(401).json({ message: 'Unauthorized: Missing user' });
+    }
+    const codes = await Code.find().skip(skip).limit(limit)
+
+    res.status(200).json({
+        message: 'All Codes',
+        status: "success",
+        data: codes,
+        pagination: {
+            total,
+            page,
+            limit,
+            pages: Math.ceil(total / limit),
+        },
+    });
 }
 
