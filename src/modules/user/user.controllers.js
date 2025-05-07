@@ -214,6 +214,8 @@ export const login = catchAsyncError(async (req, res, next) => {
   const token = jwt.sign(
     {
       id: user._id,
+      phone: user.phone,
+      national_card: user.national_card,
       role: user.role,
     },
     JWT_SECRET,
@@ -332,4 +334,12 @@ export const firstLogin = catchAsyncError(async (req, res, next) => {
     data: userData,
   });
 });
+
+
+export const getLoggedUserProfile = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.user._id).select('-password -__v -createdAt -updatedAt')
+  if (!user) throw new AppError('User not found', 404)
+
+  res.status(200).json({ message: 'User profile', data: user })
+})
 

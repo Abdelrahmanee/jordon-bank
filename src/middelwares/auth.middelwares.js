@@ -85,3 +85,27 @@ export const decodeAdminFromToken = catchAsyncError(async (req, res, next) => {
   }
   next();
 });
+export const decodeLoggedUserProfile = catchAsyncError(async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return next();
+  const token = authHeader.split(" ")[1];
+  if(!token) return next(new AppError('Token not provided', 401));
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log(decoded)
+    const user = await User.findOne({ _id : decoded.id  });
+    console.log(user)
+    if(!user) return next(new AppError('User not found', 404));
+    
+    if (user) {
+      req.user = user.toObject();
+      delete req.user.password;
+      delete req.user.__v;
+      delete req.user.createdAt;
+      delete req.user.updatedAt;
+    }
+  } catch (err) {
+    return next();
+  }
+  next();
+});

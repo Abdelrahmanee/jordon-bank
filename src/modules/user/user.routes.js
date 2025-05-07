@@ -1,8 +1,8 @@
 
 import { Router } from 'express'
-import { adminLogin, approveUser, createAdmin, createUser, deleteUser, firstLogin, getAllApprovedUsers, getAllPendingUsers, getAllRejectedUsers, getUserProfile, login, logout, rejectUser } from './user.controllers.js'
+import { adminLogin, approveUser, createAdmin, createUser, deleteUser, firstLogin, getAllApprovedUsers, getAllPendingUsers, getAllRejectedUsers, getLoggedUserProfile, getUserProfile, login, logout, rejectUser } from './user.controllers.js'
 import { checkUniquenational_card, checkUniquePhone } from './user.middelwares.js'
-import { authenticate, authorize, decodeAdminFromToken, decodeUserFromToken } from '../../middelwares/auth.middelwares.js'
+import { authenticate, authorize, decodeAdminFromToken, decodeLoggedUserProfile, decodeUserFromToken } from '../../middelwares/auth.middelwares.js'
 import { validate } from '../../middelwares/validation.middelware.js'
 import { ROLES } from '../../utilies/enums.js'
 import { connectToDB } from '../../../db/db.connect.js'
@@ -28,6 +28,10 @@ userRouter.get('/all-pending-users', decodeAdminFromToken, authorize([ROLES.ADMI
 userRouter.get('/all-rejected-users', decodeAdminFromToken, authorize([ROLES.ADMIN]), getAllRejectedUsers)
 userRouter.get('/all-approved-users', decodeAdminFromToken, authorize([ROLES.ADMIN]), getAllApprovedUsers)
 userRouter.get('/profile', decodeUserFromToken, getUserProfile)
+
+userRouter.get('/logged-user-profile', decodeLoggedUserProfile, getLoggedUserProfile)
+
+
 userRouter.post('/login-admin', adminLogin)
 userRouter.patch('/logout', authenticate, logout)
 
