@@ -46,21 +46,22 @@ export const getCodes = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    if (!req.user?.userName) {
-        return res.status(401).json({ message: 'Unauthorized: Missing user' });
-    }
-    const codes = await Code.find().skip(skip).limit(limit)
-
+  
+    const [codes, total] = await Promise.all([
+      Code.find().skip(skip).limit(limit),
+      Code.countDocuments()
+    ]);
+  
     res.status(200).json({
-        message: 'All Codes',
-        status: "success",
-        data: codes,
-        pagination: {
-            total,
-            page,
-            limit,
-            pages: Math.ceil(total / limit),
-        },
+      message: 'All Codes',
+      status: "success",
+      data: codes,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
     });
-}
-
+  };
+  
