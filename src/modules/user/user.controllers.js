@@ -234,10 +234,15 @@ export const login = catchAsyncError(async (req, res, next) => {
 });
 
 export const deleteUser = catchAsyncError(async (req, res, next) => {
-  await User.findByIdAndUpdate(req.user._id, { isLoggedOut: true, status: USERSTATUS.DELETED })
-  res.status(200).json({ message: "User is deleted" })
-})
+  const { userId } = req.body;
 
+  const user = await User.findById(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  await user.deleteOne(); 
+
+  res.status(200).json({ message: "User is deleted successfully" });
+});
 export const logout = catchAsyncError(async (req, res, next) => {
   await User.findByIdAndUpdate(req.user._id, { isLoggedOut: true, status: USERSTATUS.OFFLINE })
   res.status(200).json({ message: "Logged out success" })
