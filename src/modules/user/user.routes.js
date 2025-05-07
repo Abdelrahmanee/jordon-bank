@@ -17,7 +17,7 @@ const userRouter = Router()
 await connectToDB()
 userRouter.post('/create-user', checkUniquenational_card, checkUniquePhone, createUser)
 userRouter.post('/create-admin', checkUniquenational_card, checkUniquePhone, createAdmin)
-userRouter.delete('/delete-user', checkUniquenational_card, checkUniquePhone, deleteUser)
+userRouter.delete('/delete-user',decodeAdminFromToken   , authorize([ROLES.ADMIN]), deleteUser)
 
 userRouter.post('/login', login)
 userRouter.patch('/approve-user', decodeAdminFromToken, authorize([ROLES.ADMIN]), approveUser)
