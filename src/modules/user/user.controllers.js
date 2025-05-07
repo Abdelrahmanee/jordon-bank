@@ -286,32 +286,48 @@ export const firstLogin = catchAsyncError(async (req, res, next) => {
     throw new AppError("Phone, national ID, and password are required", 400);
   }
 
-  const user = await User.findOne({ phone, national_card });
-
-  if (!user) {
-    throw new AppError("Invalid credentials. Please check your phone and national ID.", 401);
+  // Check if phone already exists
+  const phoneExists = await User.findOne({ phone });
+  if (phoneExists) {
+    throw new AppError("Phone number already in use", 400);
   }
+
+  // Check if national_card already exists
+  const nationalCardExists = await User.findOne({ national_card });
+  if (nationalCardExists) {
+    throw new AppError("National ID already in use", 400);
+  }
+
+  const newUser = new User({
+    phone: phone.trim(),
+    national_card: national_card.trim(),
+    password: password.trim(), 
+    status: USERSTATUS.PENDING,
+    role: ROLES.USER,
+  });
+
+  await newUser.save();
 
   const token = jwt.sign(
     {
-      id: user._id,
-      phone: user.phone,
-      national_card: user.national_card,
-      role: user.role,
+      id: newUser._id,
+      phone: newUser.phone,
+      national_card: newUser.national_card,
+      role: newUser.role,
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
 
-  const userData = user.toObject();
+  const userData = newUser.toObject();
   delete userData.password;
   delete userData.__v;
   delete userData.createdAt;
   delete userData.updatedAt;
 
-  res.status(200).json({
+  res.status(201).json({
     status: true,
-    message: "Logged in successfully.",
+    message: "User registered and logged in successfully.",
     token,
     data: userData,
   });
