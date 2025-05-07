@@ -20,7 +20,7 @@ export const bootstrap = (app) => {
     app.use(express.json())
 
 
-    const allowedOrigins = ['http://localhost:5173', 'https://jordon-bank.vercel.app'];
+    const allowedOrigins = ['http://localhost:5173', 'https://jordonbank.vercel.app'];
 
     const corsOptions = {
       origin: (origin, callback) => {
