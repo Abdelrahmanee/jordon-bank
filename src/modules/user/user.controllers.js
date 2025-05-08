@@ -24,9 +24,6 @@ export const createUser = catchAsyncError(async (req, res) => {
 
   const duplicateQuery = hasUsernameLogin ? { userName } : { phone, national_card };
 
-  const isExists = await User.findOne(duplicateQuery);
-  if (isExists) throw new AppError('User already exists', 400);
-
   const newUser = new User({
     userName: userName?.trim(),
     phone: phone?.trim(),
