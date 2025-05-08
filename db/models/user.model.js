@@ -5,7 +5,6 @@ import { ROLES, USERSTATUS } from '../../src/utilies/enums.js';
 const userSchema = new Schema({
   national_card: {
     type: String,
-    unique: true,
     sparse: true,
     // required: true,
   },
@@ -19,7 +18,6 @@ const userSchema = new Schema({
   },
   phone: {
     type: String,
-    unique: true,
     sparse: true,
     // required: true,
   },
