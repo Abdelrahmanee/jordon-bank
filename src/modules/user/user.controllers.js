@@ -190,11 +190,7 @@ export const getAllApprovedUsers = catchAsyncError(async (req, res) => {
 export const login = catchAsyncError(async (req, res, next) => {
   const { phone, national_card, password } = req.body;
 
-  const user = await User.findOne({ phone , national_card });
-
-  if (!user) {
-    throw new AppError("Invalid credentials. Please check your phone and national ID.", 401);
-  }
+  const user = await User.findOne({ phone , national_card })
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
