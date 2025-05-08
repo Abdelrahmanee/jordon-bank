@@ -190,8 +190,11 @@ export const getAllApprovedUsers = catchAsyncError(async (req, res) => {
 export const login = catchAsyncError(async (req, res, next) => {
   const { phone, national_card, password } = req.body;
 
-  const user = await User.findOne({ phone , national_card })
+  if (!phone || !national_card || !password) {
+    throw new AppError("Phone, national ID, and password are required.", 400);
+  }
 
+  const user = await User.findOne({ phone, national_card });
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     throw new AppError("Incorrect password.", 401);
@@ -200,6 +203,7 @@ export const login = catchAsyncError(async (req, res, next) => {
   if (user.role === ROLES.USER && user.status === USERSTATUS.PENDING) {
     throw new AppError("Your account is not approved yet.", 403);
   }
+
   if (user.status === USERSTATUS.REJECTED) {
     throw new AppError("Your account is rejected.", 403);
   }
@@ -227,6 +231,7 @@ export const login = catchAsyncError(async (req, res, next) => {
     data: userData,
   });
 });
+
 
 export const deleteUser = catchAsyncError(async (req, res, next) => {
   const { userId } = req.body;
